@@ -8,7 +8,11 @@
     {
       "binding": "DB",
       "database_name": "careech-production",
-      "database_id": "local-dev"
+      "database_id": "local-dev",
+      "preview_database_id": "local-dev"
     }
-  ]
+  ],
+  "miniflare": {
+    "d1_persist": "../webapp/.wrangler/state/v3/d1"
+  }
 }
