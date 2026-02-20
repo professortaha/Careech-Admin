@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Careech</title>
+    <link rel="icon" type="image/x-icon" href="/static/careech-logo.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
+    <style>
+        .tab-button.active {
+            background-color: #3B9B9F;
+            color: white;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #3B9B9F 0%, #2C5F7B 100%);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="bg-white shadow-md border-b-4 border-teal-500">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <img src="/static/careech-logo.png" alt="Careech Logo" class="h-12">
+                    <h1 class="text-2xl font-bold" style="color: #2C5F7B;">
+                        <i class="fas fa-shield-alt mr-2"></i>Admin Dashboard
+                    </h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-sm text-gray-600">
+                        <i class="fas fa-user-circle mr-1"></i>
+                        <span id="admin-username">Loading...</span>
+                    </span>
+                    <button onclick="logout()" class="text-red-600 hover:text-red-700 font-medium">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="container mx-auto px-4 py-8">
+        <!-- Statistics Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="stat-card rounded-lg shadow-lg p-6 text-white">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm opacity-90">Total Candidates</p>
+                        <h3 class="text-3xl font-bold mt-2" id="stat-candidates">0</h3>
+                    </div>
+                    <i class="fas fa-users text-4xl opacity-50"></i>
+                </div>
+            </div>
+            <div class="stat-card rounded-lg shadow-lg p-6 text-white">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm opacity-90">Verified Profiles</p>
+                        <h3 class="text-3xl font-bold mt-2" id="stat-verified">0</h3>
+                    </div>
+                    <i class="fas fa-certificate text-4xl opacity-50"></i>
+                </div>
+            </div>
+            <div class="stat-card rounded-lg shadow-lg p-6 text-white">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm opacity-90">Job Posts</p>
+                        <h3 class="text-3xl font-bold mt-2" id="stat-jobs">0</h3>
+                    </div>
+                    <i class="fas fa-briefcase text-4xl opacity-50"></i>
+                </div>
+            </div>
+            <div class="stat-card rounded-lg shadow-lg p-6 text-white">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm opacity-90">Total Matches</p>
+                        <h3 class="text-3xl font-bold mt-2" id="stat-matches">0</h3>
+                    </div>
+                    <i class="fas fa-handshake text-4xl opacity-50"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="bg-white rounded-lg shadow-md mb-6">
+            <div class="border-b border-gray-200">
+                <nav class="flex space-x-4 px-6 pt-4">
+                    <button onclick="switchTab('candidates')" 
+                            class="tab-button px-6 py-3 text-sm font-medium rounded-t-lg active"
+                            id="tab-candidates">
+                        <i class="fas fa-users mr-2"></i>Candidates
+                    </button>
+                    <button onclick="switchTab('verifications')" 
+                            class="tab-button px-6 py-3 text-sm font-medium rounded-t-lg bg-gray-100 text-gray-600"
+                            id="tab-verifications">
+                        <i class="fas fa-certificate mr-2"></i>Verifications
+                    </button>
+                    <button onclick="switchTab('jobs')" 
+                            class="tab-button px-6 py-3 text-sm font-medium rounded-t-lg bg-gray-100 text-gray-600"
+                            id="tab-jobs">
+                        <i class="fas fa-briefcase mr-2"></i>Job Posts
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Tab Content -->
+            <div class="p-6">
+                <!-- Candidates Tab -->
+                <div id="content-candidates" class="tab-content">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold" style="color: #2C5F7B;">
+                            <i class="fas fa-users mr-2"></i>All Candidates
+                        </h2>
+                        <div class="flex items-center space-x-4">
+                            <input type="text" 
+                                   id="search-candidates"
+                                   placeholder="Search by name, email..."
+                                   class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-teal-500">
+                            <button onclick="loadCandidates()" class="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700">
+                                <i class="fas fa-sync mr-2"></i>Refresh
+                            </button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full bg-white">
+                            <thead class="bg-gray-100">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Target Role</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">CV Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Created</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="candidates-table" class="divide-y divide-gray-200">
+                                <tr>
+                                    <td colspan="7" class="px-6 py-4 text-center text-gray-500">
+                                        <i class="fas fa-spinner fa-spin mr-2"></i>Loading candidates...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Verifications Tab -->
+                <div id="content-verifications" class="tab-content hidden">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold" style="color: #2C5F7B;">
+                            <i class="fas fa-certificate mr-2"></i>Verification History
+                        </h2>
+                        <button onclick="loadVerifications()" class="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700">
+                            <i class="fas fa-sync mr-2"></i>Refresh
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full bg-white">
+                            <thead class="bg-gray-100">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Candidate</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Overall Score</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Skills Count</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Verification Date</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Slug</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="verifications-table" class="divide-y divide-gray-200">
+                                <tr>
+                                    <td colspan="6" class="px-6 py-4 text-center text-gray-500">
+                                        <i class="fas fa-spinner fa-spin mr-2"></i>Loading verifications...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Job Posts Tab -->
+                <div id="content-jobs" class="tab-content hidden">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold" style="color: #2C5F7B;">
+                            <i class="fas fa-briefcase mr-2"></i>Job Postings
+                        </h2>
+                        <button onclick="loadJobs()" class="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700">
+                            <i class="fas fa-sync mr-2"></i>Refresh
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full bg-white">
+                            <thead class="bg-gray-100">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Title</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Seniority</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Skills Required</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Matches</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Created</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="jobs-table" class="divide-y divide-gray-200">
+                                <tr>
+                                    <td colspan="7" class="px-6 py-4 text-center text-gray-500">
+                                        <i class="fas fa-spinner fa-spin mr-2"></i>Loading job posts...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Details Modal -->
+    <div id="details-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-2xl font-bold" style="color: #2C5F7B;" id="modal-title">Details</h3>
+                    <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-2xl"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="p-6" id="modal-content">
+                <!-- Dynamic content -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Authentication check and axios setup
+        const token = localStorage.getItem('admin_token');
+        
+        // Redirect to login if no token
+        if (!token) {
+            window.location.href = '/admin/login';
+        }
+
+        // Set up axios to include token in all requests
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+        // Verify token on page load
+        async function verifyAuth() {
+            try {
+                const response = await axios.get('/api/admin/verify');
+                if (response.data.valid) {
+                    document.getElementById('admin-username').textContent = response.data.username;
+                } else {
+                    throw new Error('Invalid token');
+                }
+            } catch (error) {
+                console.error('Auth verification failed:', error);
+                localStorage.removeItem('admin_token');
+                localStorage.removeItem('admin_username');
+                window.location.href = '/admin/login';
+            }
+        }
+
+        // Logout function
+        async function logout() {
+            try {
+                await axios.post('/api/admin/logout');
+            } catch (error) {
+                console.error('Logout error:', error);
+            } finally {
+                localStorage.removeItem('admin_token');
+                localStorage.removeItem('admin_username');
+                window.location.href = '/admin/login';
+            }
+        }
+
+        // Intercept 401 responses and redirect to login
+        axios.interceptors.response.use(
+            response => response,
+            error => {
+                if (error.response && error.response.status === 401) {
+                    localStorage.removeItem('admin_token');
+                    localStorage.removeItem('admin_username');
+                    window.location.href = '/admin/login';
+                }
+                return Promise.reject(error);
+            }
+        );
+
+        let allCandidates = [];
+        let allVerifications = [];
+        let allJobs = [];
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Verify authentication first
+            await verifyAuth();
+            
+            // Then load data
+            loadStatistics();
+            loadCandidates();
+            
+            // Search functionality
+            document.getElementById('search-candidates').addEventListener('input', (e) => {
+                const searchTerm = e.target.value.toLowerCase();
+                const filtered = allCandidates.filter(c => 
+                    c.full_name?.toLowerCase().includes(searchTerm) ||
+                    c.email?.toLowerCase().includes(searchTerm) ||
+                    c.target_role?.toLowerCase().includes(searchTerm)
+                );
+                renderCandidatesTable(filtered);
+            });
+        });
+
+        // Load statistics
+        async function loadStatistics() {
+            try {
+                const response = await axios.get('/api/admin/statistics');
+                const stats = response.data;
+                
+                document.getElementById('stat-candidates').textContent = stats.total_candidates;
+                document.getElementById('stat-verified').textContent = stats.verified_profiles;
+                document.getElementById('stat-jobs').textContent = stats.total_jobs;
+                document.getElementById('stat-matches').textContent = stats.total_matches;
+            } catch (error) {
+                console.error('Error loading statistics:', error);
+            }
+        }
+
+        // Load candidates
+        async function loadCandidates() {
+            try {
+                const response = await axios.get('/api/admin/candidates');
+                allCandidates = response.data;
+                renderCandidatesTable(allCandidates);
+            } catch (error) {
+                console.error('Error loading candidates:', error);
+                document.getElementById('candidates-table').innerHTML = `
+                    <tr><td colspan="7" class="px-6 py-4 text-center text-red-500">
+                        <i class="fas fa-exclamation-circle mr-2"></i>Error loading candidates
+                    </td></tr>
+                `;
+            }
+        }
+
+        // Render candidates table
+        function renderCandidatesTable(candidates) {
+            const tbody = document.getElementById('candidates-table');
+            
+            if (candidates.length === 0) {
+                tbody.innerHTML = `
+                    <tr><td colspan="7" class="px-6 py-4 text-center text-gray-500">
+                        <i class="fas fa-inbox mr-2"></i>No candidates found
+                    </td></tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = candidates.map(c => `
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 text-sm text-gray-900">${c.id}</td>
+                    <td class="px-6 py-4 text-sm font-medium text-gray-900">${c.full_name || 'N/A'}</td>
+                    <td class="px-6 py-4 text-sm text-gray-600">${c.email || 'N/A'}</td>
+                    <td class="px-6 py-4 text-sm text-gray-600">${c.target_role || 'N/A'}</td>
+                    <td class="px-6 py-4">
+                        <span class="px-3 py-1 text-xs font-medium rounded-full ${c.cv_text ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
+                            ${c.cv_text ? 'Has CV' : 'No CV'}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-500">${new Date(c.created_at).toLocaleDateString()}</td>
+                    <td class="px-6 py-4 text-sm">
+                        <button onclick="viewCandidate('${c.uuid}')" 
+                                class="text-teal-600 hover:text-teal-800 mr-3"
+                                title="View Details">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        ${c.verification_slug ? `
+                            <a href="/v/${c.verification_slug}" 
+                               target="_blank"
+                               class="text-blue-600 hover:text-blue-800"
+                               title="View Verification">
+                                <i class="fas fa-certificate"></i>
+                            </a>
+                        ` : ''}
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Load verifications
+        async function loadVerifications() {
+            try {
+                const response = await axios.get('/api/admin/verifications');
+                allVerifications = response.data;
+                renderVerificationsTable(allVerifications);
+            } catch (error) {
+                console.error('Error loading verifications:', error);
+                document.getElementById('verifications-table').innerHTML = `
+                    <tr><td colspan="6" class="px-6 py-4 text-center text-red-500">
+                        <i class="fas fa-exclamation-circle mr-2"></i>Error loading verifications
+                    </td></tr>
+                `;
+            }
+        }
+
+        // Render verifications table
+        function renderVerificationsTable(verifications) {
+            const tbody = document.getElementById('verifications-table');
+            
+            if (verifications.length === 0) {
+                tbody.innerHTML = `
+                    <tr><td colspan="6" class="px-6 py-4 text-center text-gray-500">
+                        <i class="fas fa-inbox mr-2"></i>No verifications found
+                    </td></tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = verifications.map(v => `
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 text-sm font-medium text-gray-900">${v.candidate_name}</td>
+                    <td class="px-6 py-4">
+                        <div class="flex items-center">
+                            <span class="text-lg font-bold" style="color: ${getScoreColor(v.overall_confidence_score)}">
+                                ${v.overall_confidence_score}%
+                            </span>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-600">${v.skills_count} skills</td>
+                    <td class="px-6 py-4 text-sm text-gray-500">${new Date(v.verification_date).toLocaleDateString()}</td>
+                    <td class="px-6 py-4 text-sm">
+                        <code class="bg-gray-100 px-2 py-1 rounded text-xs">${v.verification_slug}</code>
+                    </td>
+                    <td class="px-6 py-4 text-sm">
+                        <a href="/v/${v.verification_slug}" 
+                           target="_blank"
+                           class="text-teal-600 hover:text-teal-800 mr-3"
+                           title="View Public Page">
+                            <i class="fas fa-external-link-alt"></i>
+                        </a>
+                        <button onclick="viewVerificationDetails(${v.id})" 
+                                class="text-blue-600 hover:text-blue-800"
+                                title="View Details">
+                            <i class="fas fa-info-circle"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Load job posts
+        async function loadJobs() {
+            try {
+                const response = await axios.get('/api/admin/jobs');
+                allJobs = response.data;
+                renderJobsTable(allJobs);
+            } catch (error) {
+                console.error('Error loading jobs:', error);
+                document.getElementById('jobs-table').innerHTML = `
+                    <tr><td colspan="7" class="px-6 py-4 text-center text-red-500">
+                        <i class="fas fa-exclamation-circle mr-2"></i>Error loading job posts
+                    </td></tr>
+                `;
+            }
+        }
+
+        // Render jobs table
+        function renderJobsTable(jobs) {
+            const tbody = document.getElementById('jobs-table');
+            
+            if (jobs.length === 0) {
+                tbody.innerHTML = `
+                    <tr><td colspan="7" class="px-6 py-4 text-center text-gray-500">
+                        <i class="fas fa-inbox mr-2"></i>No job posts found
+                    </td></tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = jobs.map(j => `
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 text-sm text-gray-900">${j.id}</td>
+                    <td class="px-6 py-4 text-sm font-medium text-gray-900">${j.title}</td>
+                    <td class="px-6 py-4">
+                        <span class="px-3 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                            ${j.seniority_level}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 text-sm">
+                        <div class="flex flex-wrap gap-1">
+                            ${j.required_skills.slice(0, 3).map(skill => 
+                                `<span class="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded">${skill}</span>`
+                            ).join('')}
+                            ${j.required_skills.length > 3 ? `<span class="text-xs text-gray-500">+${j.required_skills.length - 3}</span>` : ''}
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-600">${j.matches_count} matches</td>
+                    <td class="px-6 py-4 text-sm text-gray-500">${new Date(j.created_at).toLocaleDateString()}</td>
+                    <td class="px-6 py-4 text-sm">
+                        <button onclick="viewJobDetails(${j.id})" 
+                                class="text-teal-600 hover:text-teal-800 mr-3"
+                                title="View Details">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button onclick="viewJobMatches(${j.id})" 
+                                class="text-blue-600 hover:text-blue-800"
+                                title="View Matches">
+                            <i class="fas fa-users"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Tab switching
+        function switchTab(tab) {
+            // Update button styles
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active', 'bg-teal-600', 'text-white');
+                btn.classList.add('bg-gray-100', 'text-gray-600');
+            });
+            document.getElementById(`tab-${tab}`).classList.add('active');
+            document.getElementById(`tab-${tab}`).classList.remove('bg-gray-100', 'text-gray-600');
+
+            // Show/hide content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            document.getElementById(`content-${tab}`).classList.remove('hidden');
+
+            // Load data if not already loaded
+            if (tab === 'verifications' && allVerifications.length === 0) {
+                loadVerifications();
+            } else if (tab === 'jobs' && allJobs.length === 0) {
+                loadJobs();
+            }
+        }
+
+        // View candidate details
+        async function viewCandidate(uuid) {
+            try {
+                const response = await axios.get(`/api/admin/candidates/${uuid}`);
+                const candidate = response.data;
+                
+                document.getElementById('modal-title').textContent = `Candidate: ${candidate.full_name || 'N/A'}`;
+                document.getElementById('modal-content').innerHTML = `
+                    <div class="space-y-6">
+                        <div>
+                            <h4 class="font-semibold text-gray-700 mb-2">Basic Information</h4>
+                            <div class="grid grid-cols-2 gap-4 text-sm">
+                                <div><span class="text-gray-500">UUID:</span> <code class="bg-gray-100 px-2 py-1 rounded">${candidate.uuid}</code></div>
+                                <div><span class="text-gray-500">Email:</span> ${candidate.email || 'N/A'}</div>
+                                <div><span class="text-gray-500">Phone:</span> ${candidate.phone || 'N/A'}</div>
+                                <div><span class="text-gray-500">Target Role:</span> ${candidate.target_role || 'N/A'}</div>
+                                <div><span class="text-gray-500">Years of Experience:</span> ${candidate.years_of_experience || 'N/A'}</div>
+                                <div><span class="text-gray-500">Created:</span> ${new Date(candidate.created_at).toLocaleString()}</div>
+                            </div>
+                        </div>
+                        
+                        ${candidate.professional_summary ? `
+                            <div>
+                                <h4 class="font-semibold text-gray-700 mb-2">Professional Summary</h4>
+                                <p class="text-sm text-gray-600">${candidate.professional_summary}</p>
+                            </div>
+                        ` : ''}
+                        
+                        ${candidate.cv_text ? `
+                            <div>
+                                <h4 class="font-semibold text-gray-700 mb-2">CV Content</h4>
+                                <div class="bg-gray-50 p-4 rounded-lg max-h-64 overflow-y-auto">
+                                    <pre class="text-xs text-gray-600 whitespace-pre-wrap">${candidate.cv_text}</pre>
+                                </div>
+                            </div>
+                        ` : ''}
+                        
+                        ${candidate.structured_cv ? `
+                            <div>
+                                <h4 class="font-semibold text-gray-700 mb-2">Structured CV Data</h4>
+                                <div class="bg-gray-50 p-4 rounded-lg max-h-64 overflow-y-auto">
+                                    <pre class="text-xs text-gray-600">${JSON.stringify(candidate.structured_cv, null, 2)}</pre>
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+                
+                document.getElementById('details-modal').classList.remove('hidden');
+            } catch (error) {
+                console.error('Error loading candidate details:', error);
+                alert('Error loading candidate details');
+            }
+        }
+
+        // View verification details
+        async function viewVerificationDetails(verificationId) {
+            try {
+                const response = await axios.get(`/api/admin/verifications/${verificationId}`);
+                const verification = response.data;
+                
+                document.getElementById('modal-title').textContent = `Verification Details`;
+                document.getElementById('modal-content').innerHTML = `
+                    <div class="space-y-6">
+                        <div>
+                            <h4 class="font-semibold text-gray-700 mb-2">Verification Info</h4>
+                            <div class="grid grid-cols-2 gap-4 text-sm">
+                                <div><span class="text-gray-500">Candidate:</span> ${verification.candidate_name}</div>
+                                <div><span class="text-gray-500">Overall Score:</span> 
+                                    <span class="font-bold" style="color: ${getScoreColor(verification.overall_confidence_score)}">
+                                        ${verification.overall_confidence_score}%
+                                    </span>
+                                </div>
+                                <div><span class="text-gray-500">Verification Date:</span> ${new Date(verification.verification_date).toLocaleString()}</div>
+                                <div><span class="text-gray-500">Slug:</span> <code class="bg-gray-100 px-2 py-1 rounded">${verification.verification_slug}</code></div>
+                            </div>
+                        </div>
+                        
+                        ${verification.assessment_summary ? `
+                            <div>
+                                <h4 class="font-semibold text-gray-700 mb-2">Assessment Summary</h4>
+                                <p class="text-sm text-gray-600">${verification.assessment_summary}</p>
+                            </div>
+                        ` : ''}
+                        
+                        <div>
+                            <h4 class="font-semibold text-gray-700 mb-4">Verified Skills</h4>
+                            <div class="space-y-3">
+                                ${verification.skills.map(skill => `
+                                    <div class="border border-gray-200 rounded-lg p-4">
+                                        <div class="flex justify-between items-center mb-2">
+                                            <span class="font-medium text-gray-900">${skill.skill_name}</span>
+                                            <span class="text-lg font-bold" style="color: ${getScoreColor(skill.confidence_score)}">
+                                                ${skill.confidence_score}%
+                                            </span>
+                                        </div>
+                                        <div class="w-full bg-gray-200 rounded-full h-2 mb-2">
+                                            <div class="h-2 rounded-full" 
+                                                 style="width: ${skill.confidence_score}%; background-color: ${getScoreColor(skill.confidence_score)}">
+                                            </div>
+                                        </div>
+                                        ${skill.evidence ? `
+                                            <p class="text-xs text-gray-600 mt-2">
+                                                <span class="font-medium">Evidence:</span> ${skill.evidence}
+                                            </p>
+                                        ` : ''}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                document.getElementById('details-modal').classList.remove('hidden');
+            } catch (error) {
+                console.error('Error loading verification details:', error);
+                alert('Error loading verification details');
+            }
+        }
+
+        // View job details
+        async function viewJobDetails(jobId) {
+            try {
+                const response = await axios.get(`/api/admin/jobs/${jobId}`);
+                const job = response.data;
+                
+                document.getElementById('modal-title').textContent = `Job: ${job.title}`;
+                document.getElementById('modal-content').innerHTML = `
+                    <div class="space-y-6">
+                        <div>
+                            <h4 class="font-semibold text-gray-700 mb-2">Job Information</h4>
+                            <div class="grid grid-cols-2 gap-4 text-sm">
+                                <div><span class="text-gray-500">Title:</span> ${job.title}</div>
+                                <div><span class="text-gray-500">Seniority:</span> 
+                                    <span class="px-3 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                                        ${job.seniority_level}
+                                    </span>
+                                </div>
+                                <div><span class="text-gray-500">Created:</span> ${new Date(job.created_at).toLocaleString()}</div>
+                                <div><span class="text-gray-500">Total Matches:</span> ${job.matches_count}</div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h4 class="font-semibold text-gray-700 mb-2">Required Skills</h4>
+                            <div class="flex flex-wrap gap-2">
+                                ${job.required_skills.map(skill => 
+                                    `<span class="px-3 py-1 text-sm bg-teal-100 text-teal-800 rounded-full">${skill}</span>`
+                                ).join('')}
+                            </div>
+                        </div>
+                        
+                        ${job.must_have_requirements && job.must_have_requirements.length > 0 ? `
+                            <div>
+                                <h4 class="font-semibold text-gray-700 mb-2">Must-Have Requirements</h4>
+                                <ul class="list-disc list-inside text-sm text-gray-600 space-y-1">
+                                    ${job.must_have_requirements.map(req => `<li>${req}</li>`).join('')}
+                                </ul>
+                            </div>
+                        ` : ''}
+                        
+                        ${job.job_description ? `
+                            <div>
+                                <h4 class="font-semibold text-gray-700 mb-2">Full Description</h4>
+                                <div class="bg-gray-50 p-4 rounded-lg max-h-64 overflow-y-auto">
+                                    <pre class="text-xs text-gray-600 whitespace-pre-wrap">${job.job_description}</pre>
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+                
+                document.getElementById('details-modal').classList.remove('hidden');
+            } catch (error) {
+                console.error('Error loading job details:', error);
+                alert('Error loading job details');
+            }
+        }
+
+        // View job matches
+        async function viewJobMatches(jobId) {
+            try {
+                const response = await axios.get(`/api/admin/jobs/${jobId}/matches`);
+                const matches = response.data;
+                
+                document.getElementById('modal-title').textContent = `Matched Candidates`;
+                document.getElementById('modal-content').innerHTML = `
+                    <div class="space-y-4">
+                        ${matches.length === 0 ? `
+                            <p class="text-center text-gray-500 py-8">
+                                <i class="fas fa-inbox text-4xl mb-4"></i><br>
+                                No matches found for this job
+                            </p>
+                        ` : matches.map((match, index) => `
+                            <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                                <div class="flex justify-between items-start mb-2">
+                                    <div>
+                                        <h5 class="font-semibold text-gray-900">#${index + 1} - ${match.candidate_name}</h5>
+                                        <p class="text-sm text-gray-600">${match.target_role || 'N/A'}</p>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="text-2xl font-bold" style="color: ${getScoreColor(match.match_score)}">
+                                            ${match.match_score}%
+                                        </div>
+                                        <div class="text-xs text-gray-500">Match Score</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-3 space-y-2 text-sm">
+                                    <div>
+                                        <span class="font-medium text-green-700">Strengths:</span>
+                                        <p class="text-gray-600">${match.strengths}</p>
+                                    </div>
+                                    <div>
+                                        <span class="font-medium text-yellow-700">Gaps:</span>
+                                        <p class="text-gray-600">${match.gaps}</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-3 flex space-x-2">
+                                    <a href="/v/${match.verification_slug}" 
+                                       target="_blank"
+                                       class="text-xs px-3 py-1 bg-teal-600 text-white rounded hover:bg-teal-700">
+                                        <i class="fas fa-certificate mr-1"></i>View Verification
+                                    </a>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                
+                document.getElementById('details-modal').classList.remove('hidden');
+            } catch (error) {
+                console.error('Error loading matches:', error);
+                alert('Error loading job matches');
+            }
+        }
+
+        // Close modal
+        function closeModal() {
+            document.getElementById('details-modal').classList.add('hidden');
+        }
+
+        // Helper: Get color based on score
+        function getScoreColor(score) {
+            if (score >= 80) return '#5CB85C';
+            if (score >= 60) return '#3B9B9F';
+            if (score >= 40) return '#F39C12';
+            return '#E74C3C';
+        }
+
+        // Close modal on outside click
+        document.getElementById('details-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'details-modal') {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>

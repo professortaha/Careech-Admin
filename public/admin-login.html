@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - Careech</title>
+    <link rel="icon" type="image/x-icon" href="/static/careech-logo.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
+</head>
+<body class="bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 min-h-screen flex items-center justify-center">
+    <div class="container mx-auto px-4">
+        <div class="max-w-md mx-auto">
+            <!-- Logo -->
+            <div class="text-center mb-8">
+                <img src="/static/careech-logo.png" alt="Careech Logo" class="mx-auto mb-4" style="max-width: 300px; height: auto;">
+                <h1 class="text-3xl font-bold" style="color: #2C5F7B;">
+                    <i class="fas fa-shield-alt mr-2"></i>Admin Login
+                </h1>
+                <p class="text-gray-600 mt-2">Secure access to system dashboard</p>
+            </div>
+
+            <!-- Login Form -->
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <form id="login-form" class="space-y-6">
+                    <!-- Error Message -->
+                    <div id="error-message" class="hidden bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+                        <i class="fas fa-exclamation-circle mr-2"></i>
+                        <span id="error-text"></span>
+                    </div>
+
+                    <!-- Username -->
+                    <div>
+                        <label for="username" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-user mr-2"></i>Username
+                        </label>
+                        <input 
+                            type="text" 
+                            id="username" 
+                            name="username"
+                            required
+                            autocomplete="username"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                            placeholder="Enter your username"
+                        >
+                    </div>
+
+                    <!-- Password -->
+                    <div>
+                        <label for="password" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-lock mr-2"></i>Password
+                        </label>
+                        <div class="relative">
+                            <input 
+                                type="password" 
+                                id="password" 
+                                name="password"
+                                required
+                                autocomplete="current-password"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent pr-12"
+                                placeholder="Enter your password"
+                            >
+                            <button 
+                                type="button"
+                                id="toggle-password"
+                                class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                            >
+                                <i class="fas fa-eye" id="eye-icon"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Remember Me -->
+                    <div class="flex items-center">
+                        <input 
+                            type="checkbox" 
+                            id="remember-me" 
+                            name="remember-me"
+                            class="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
+                        >
+                        <label for="remember-me" class="ml-2 block text-sm text-gray-700">
+                            Remember me for 7 days
+                        </label>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button 
+                        type="submit" 
+                        id="login-btn"
+                        class="w-full bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center justify-center"
+                    >
+                        <i class="fas fa-sign-in-alt mr-2"></i>
+                        <span id="login-btn-text">Sign In</span>
+                    </button>
+                </form>
+
+                <!-- Back to Home -->
+                <div class="mt-6 text-center">
+                    <a href="/" class="text-sm text-teal-600 hover:text-teal-700 font-medium">
+                        <i class="fas fa-arrow-left mr-2"></i>Back to Home
+                    </a>
+                </div>
+
+                <!-- Demo Credentials (remove in production) -->
+                <div class="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <p class="text-xs font-semibold text-blue-800 mb-2">
+                        <i class="fas fa-info-circle mr-2"></i>Demo Credentials:
+                    </p>
+                    <p class="text-xs text-blue-700">
+                        Username: <code class="bg-blue-100 px-2 py-1 rounded">admin</code><br>
+                        Password: <code class="bg-blue-100 px-2 py-1 rounded">admin123</code>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Security Notice -->
+            <div class="mt-6 text-center text-xs text-gray-600">
+                <i class="fas fa-lock mr-1"></i>
+                Your credentials are encrypted and secure
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Toggle password visibility
+        document.getElementById('toggle-password').addEventListener('click', () => {
+            const passwordInput = document.getElementById('password');
+            const eyeIcon = document.getElementById('eye-icon');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                eyeIcon.classList.remove('fa-eye');
+                eyeIcon.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                eyeIcon.classList.remove('fa-eye-slash');
+                eyeIcon.classList.add('fa-eye');
+            }
+        });
+
+        // Show error message
+        function showError(message) {
+            const errorDiv = document.getElementById('error-message');
+            const errorText = document.getElementById('error-text');
+            errorText.textContent = message;
+            errorDiv.classList.remove('hidden');
+            
+            // Hide after 5 seconds
+            setTimeout(() => {
+                errorDiv.classList.add('hidden');
+            }, 5000);
+        }
+
+        // Handle form submission
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const rememberMe = document.getElementById('remember-me').checked;
+            
+            const loginBtn = document.getElementById('login-btn');
+            const loginBtnText = document.getElementById('login-btn-text');
+            
+            // Disable button and show loading
+            loginBtn.disabled = true;
+            loginBtnText.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Signing in...';
+            
+            try {
+                const response = await axios.post('/api/admin/login', {
+                    username,
+                    password,
+                    rememberMe
+                });
+                
+                if (response.data.success) {
+                    // Store token in localStorage
+                    localStorage.setItem('admin_token', response.data.token);
+                    
+                    // Store username for display
+                    localStorage.setItem('admin_username', response.data.username);
+                    
+                    // Show success message
+                    loginBtnText.innerHTML = '<i class="fas fa-check mr-2"></i>Success! Redirecting...';
+                    loginBtn.classList.remove('bg-teal-600', 'hover:bg-teal-700');
+                    loginBtn.classList.add('bg-green-600');
+                    
+                    // Redirect to admin dashboard
+                    setTimeout(() => {
+                        window.location.href = '/admin';
+                    }, 1000);
+                } else {
+                    showError(response.data.error || 'Login failed. Please try again.');
+                    loginBtn.disabled = false;
+                    loginBtnText.textContent = 'Sign In';
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                showError(error.response?.data?.error || 'Invalid username or password');
+                loginBtn.disabled = false;
+                loginBtnText.textContent = 'Sign In';
+            }
+        });
+
+        // Check if already logged in
+        window.addEventListener('DOMContentLoaded', async () => {
+            const token = localStorage.getItem('admin_token');
+            if (token) {
+                // Verify token is still valid
+                try {
+                    const response = await axios.get('/api/admin/verify', {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    
+                    if (response.data.valid) {
+                        // Already logged in, redirect to admin
+                        window.location.href = '/admin';
+                    }
+                } catch (error) {
+                    // Token invalid, clear it
+                    localStorage.removeItem('admin_token');
+                    localStorage.removeItem('admin_username');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
