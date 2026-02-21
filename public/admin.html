@@ -377,6 +377,13 @@
                                 title="View Details">
                             <i class="fas fa-eye"></i>
                         </button>
+                        ${c.cv_text ? `
+                            <button onclick="downloadCV('${c.uuid}', '${(c.full_name || 'candidate').replace(/'/g, "\\'")}')" 
+                                    class="text-green-600 hover:text-green-800 mr-3"
+                                    title="Download CV">
+                                <i class="fas fa-download"></i>
+                            </button>
+                        ` : ''}
                         ${c.verification_slug ? `
                             <a href="/v/${c.verification_slug}" 
                                target="_blank"
@@ -536,6 +543,33 @@
                 loadVerifications();
             } else if (tab === 'jobs' && allJobs.length === 0) {
                 loadJobs();
+            }
+        }
+
+        // Download CV as text file
+        async function downloadCV(uuid, candidateName) {
+            try {
+                const response = await axios.get(`/api/admin/candidates/${uuid}`);
+                const candidate = response.data;
+                
+                if (!candidate.cv_text) {
+                    alert('No CV text available for this candidate');
+                    return;
+                }
+                
+                // Create a blob with the CV text
+                const blob = new Blob([candidate.cv_text], { type: 'text/plain' });
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `${candidateName.replace(/[^a-z0-9]/gi, '_')}_CV.txt`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+            } catch (error) {
+                console.error('Error downloading CV:', error);
+                alert('Failed to download CV');
             }
         }
 
