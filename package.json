@@ -1,6 +1,10 @@
 {
   "name": "careech-admin",
   "version": "1.0.0",
+  "description": "Careech Admin Panel - Secure Management Dashboard",
+  "author": "Careech",
+  "license": "UNLICENSED",
+  "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite",
